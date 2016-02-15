@@ -52,7 +52,7 @@ enum {
 
 typedef unsigned char bytecode_type;
 typedef uint8_t unit_t;
-typedef uint32_t sys_type;	// 32位系统 cpu能运行32位数
+typedef int32_t sys_type;	// 32位系统 cpu能运行32位数
 
 /* cpu component (extend variables) */
 
