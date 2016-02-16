@@ -11,6 +11,9 @@
 #include <cstdlib>		// for itoa
 #include <cstdio>		// for sprintf
 // #include <string>		// for substr
+#include <cstddef>
+
+#include "mini_instruction_set.h"
 
 namespace ministl {
 /*
@@ -41,14 +44,16 @@ enum error_type {
 	WELL = 0, UNKNOWN
 };
 
+#if 0
 enum {
-	NOP = 0, ADD = 128, SUB, MUL, DIV,
+	NOP = 0, IADD = 128, ISUB, IMUL, IDIV,
 	ISTORE_0, ISTORE_1, ISTORE_2, ISTORE_3,
 	ILOAD_0, ILOAD_1, ILOAD_2, ILOAD_3,
 	ICONST_0, ICONST_1, ICONST_2, ICONST_3, ICONST_4, ICONST_5,
 	BIPUSH, IINC,
 	PRINT, JMP, JEZ, JL, IF, READLINE, RET, CALL, EXIT
 };
+#endif
 
 typedef unsigned char bytecode_type;
 typedef uint8_t unit_t;
@@ -81,12 +86,6 @@ void run_vm() {
 	fetch_decode_execute_cycle();
 }
 
-/*
-class minivm {
-public:
-	minivm() {}
-};
-*/
 
 // -------------------------- 错误处理 ------------------------------
 
@@ -149,11 +148,20 @@ inline bytecode_type get_next_Instruction() {
 	return Instruction_List[PC_Register++];
 }
 
-inline uint16_t get_next_two_Instruction() {
-	uint16_t _val1 = static_cast<uint16_t>(get_next_Instruction());
-	uint16_t _val2 = static_cast<uint16_t>(get_next_Instruction());
+inline int16_t get_next_two_Instruction() {
+	int16_t _val1 = static_cast<int16_t>(get_next_Instruction());
+	int16_t _val2 = static_cast<int16_t>(get_next_Instruction());
 	_val2 |= (_val1 << 8);
 	return _val2;
+}
+
+inline long long get_next_n_instruction(unsigned _n) {
+	long long _ret = 0;
+	for (unsigned i = 0; i < _n && i < sizeof(_ret); ++i) {
+		_ret <<= (i * 8);
+		_ret += static_cast<long long>(get_next_Instruction());
+	}
+	return _ret;
 }
 
 void show_stack_info() {
@@ -250,7 +258,7 @@ void opt_ILOAD_3() {
 	push_operand(get_variable(3));
 }
 
-void opt_ADD() {
+void opt_IADD() {
 	// 从求值栈中取出俩数相加并将结果放回栈中
 	sys_type _val1 = pop_operand();
 	sys_type _val2 = pop_operand();
@@ -258,7 +266,7 @@ void opt_ADD() {
 	push_operand(_val2);
 }
 
-void opt_SUB() {
+void opt_ISUB() {
 	// 从求值栈中取出俩数相减并将结果放回栈中
 	sys_type _val1 = pop_operand();
 	sys_type _val2 = pop_operand();
@@ -266,7 +274,7 @@ void opt_SUB() {
 	push_operand(_val2);
 }
 
-void opt_MUL() {
+void opt_IMUL() {
 	// 从求值栈中取出俩数相乘并将结果放回栈中
 	sys_type _val1 = pop_operand();
 	sys_type _val2 = pop_operand();
@@ -274,7 +282,7 @@ void opt_MUL() {
 	push_operand(_val2);
 }
 
-void opt_DIV() {
+void opt_IDIV() {
 	// 从求值栈中取出俩数相除并将结果放回栈中
 	sys_type _val1 = pop_operand();
 	sys_type _val2 = pop_operand();
@@ -300,7 +308,7 @@ void opt_JMP() {
 	PC_Register = PC_n;
 }
 
-void opt_JEZ() {
+void opt_JE() {
 	// 等于零即跳转
 	sys_type PC_n = static_cast<sys_type>(get_next_two_Instruction());
 	sys_type _val = pop_operand();
@@ -310,6 +318,37 @@ void opt_JEZ() {
 	}
 }
 
+void opt_JNE() {
+	// 不等于零即跳转
+	sys_type PC_n = static_cast<sys_type>(get_next_two_Instruction());
+	sys_type _val = pop_operand();
+
+	if (_val != 0) {
+		PC_Register = PC_n;
+	}
+}
+
+void opt_JL() {
+	// 不等于零即跳转
+	sys_type PC_n = static_cast<sys_type>(get_next_two_Instruction());
+	sys_type _val = pop_operand();
+
+	if (_val < 0) {
+		PC_Register = PC_n;
+	}
+}
+
+void opt_JG() {
+	// 不等于零即跳转
+	sys_type PC_n = static_cast<sys_type>(get_next_two_Instruction());
+	sys_type _val = pop_operand();
+
+	if (_val > 0) {
+		PC_Register = PC_n;
+	}
+}
+
+#if 0
 void opt_JL() {
 	// 负数即跳转
 	sys_type PC_n = static_cast<sys_type>(get_next_two_Instruction());
@@ -319,10 +358,7 @@ void opt_JL() {
 		PC_Register = PC_n;
 	}
 }
-
-void opt_RET() {
-	// TODO();
-}
+#endif
 
 void opt_BIPUSH() {
 	// 将后一条指令压入求值栈中
@@ -330,10 +366,20 @@ void opt_BIPUSH() {
 	push_operand(static_cast<sys_type>(_tmp));
 }
 
+void opt_SIPUSH() {
+	// 将后两条指令压入求值栈中
+	push_operand(static_cast<sys_type>(get_next_n_instruction(2)));
+}
+
+void opt_LDC() {
+	// 将后四条指令压入求值栈中
+	push_operand(static_cast<sys_type>(get_next_n_instruction(4)));
+}
+
 void opt_IINC() {
 	// 自增 取后两个字节码作为两个操作数
-	uint8_t _val1 = get_next_Instruction();
-	uint8_t _val2 = get_next_Instruction();
+	int8_t _val1 = get_next_Instruction();
+	int8_t _val2 = get_next_Instruction();
 	size_t _n = static_cast<size_t>(_val1);
 	sys_type _val = get_variable(_n);
 	_val += _val2;
@@ -372,14 +418,14 @@ void execute_instruction() {
 	switch (IR_Register) {
 	case NOP:
 		opt_NOP(); break;
-	case ADD:
-		opt_ADD(); break;
-	case SUB:
-		opt_SUB(); break;
-	case MUL:
-		opt_MUL(); break;
-	case DIV:
-		opt_DIV(); break;
+	case IADD:
+		opt_IADD(); break;
+	case ISUB:
+		opt_ISUB(); break;
+	case IMUL:
+		opt_IMUL(); break;
+	case IDIV:
+		opt_IDIV(); break;
 	case PRINT:
 		opt_PRINT(); break;
 	case ISTORE_0:
@@ -414,16 +460,22 @@ void execute_instruction() {
 		opt_IINC(); break;
 	case BIPUSH:
 		opt_BIPUSH(); break;
+	case SIPUSH:
+		opt_SIPUSH(); break;
+	case LDC:
+		opt_LDC(); break;
 	case JMP:
 		opt_JMP(); break;
-	case JEZ:
-		opt_JEZ(); break;
+	case JE:
+		opt_JE(); break;
+	case JNE:
+		opt_JNE(); break;
 	case JL:
 		opt_JL(); break;
+	case JG:
+		opt_JG(); break;
 	case EXIT:
 		opt_EXIT(); break;
-	case RET:
-		opt_RET(); break;
 	default: {
 			throw_error("unknown instruction : " + int_to_string(IR_Register));
 		}
