@@ -1,7 +1,7 @@
 // instruction list
 
-#ifndef __MINI_INSTRUCTION_SET_H
-#define __MINI_INSTRUCTION_SET_H
+#ifndef __MINI_INSTRUCTIONS_H
+#define __MINI_INSTRUCTIONS_H
 
 #include <string>
 #include <map>
@@ -28,6 +28,10 @@ enum {
 	ISUB,
 	IMUL,
 	IDIV,
+
+	ISTORE,
+	ILOAD,
+	ICONST,
 
 	ISTORE_0,
 	ISTORE_1,
@@ -80,6 +84,9 @@ static pair<const string, int> sz[] = {
 	pair<const string, int>("IINC", IINC),
 	pair<const string, int>("PRINT", PRINT),
 	pair<const string, int>("JMP", JMP),
+	pair<const string, int>("ISTORE", ISTORE),
+	pair<const string, int>("ILOAD", ILOAD),
+	pair<const string, int>("ICONST", ICONST),
 	pair<const string, int>("ISTORE_0", ISTORE_0),
 	pair<const string, int>("ISTORE_1", ISTORE_1),
 	pair<const string, int>("ISTORE_2", ISTORE_2),
@@ -123,6 +130,10 @@ string bytecode_to_instruction(int _opcode) {
 	case IINC : return "IINC";
 	case PRINT : return "PRINT";
 	case JMP : return "JMP";
+
+	case ISTORE : return "ISTORE";
+	case ILOAD : return "ILOAD";
+	case ICONST : return "ICONST";
 
 	case ISTORE_0 : return "ISTORE_0";
 	case ISTORE_1 : return "ISTORE_1";
@@ -194,4 +205,4 @@ int occupied_bytes(int _n) {
 
 } // namespace ministl
 
-#endif // __MINI_INSTRUCTION_SET_H
+#endif // __MINI_INSTRUCTIONS_H
