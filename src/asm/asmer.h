@@ -305,6 +305,7 @@ public:
 				_num = literal_to_number(_tk_tmp.literal);
 				add_bytecodes_to_ret(_num, 1);
 				break;
+			case CALL:
 			case JMP:
 			case JE:
 			case JG:

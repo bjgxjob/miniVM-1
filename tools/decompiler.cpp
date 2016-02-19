@@ -1,7 +1,7 @@
 
 #include <iostream>
 #include <fstream>
-#include "../mini_instructions.h"
+#include "../src/mini_instructions.h"
 #include <cstdlib>
 
 using namespace std;
@@ -49,6 +49,8 @@ int main(int argc, char *argv[]) {
 	fin.close();
 	delete[] buffer;
 	
+	system("pause");
+	
 	return 0;
 }
 
@@ -56,6 +58,6 @@ void decompile(const char* buffer, size_t len) {
 	unsigned char* ptr = (unsigned char*)(buffer);
 	for (unsigned i = 0; i < len; i++) {
 		string tmp = ministl::bytecode_to_instruction(ptr[i]);
-		printf("%2d : %d %s\n", i, ptr[i], tmp.c_str());
+		printf("%2d : %3d\t%s\n", i, ptr[i], tmp.c_str());
 	}
 }

@@ -31,11 +31,11 @@ class minivm {
 public:
 	minivm(size_t os_size = OPERAND_STACK_SIZE,
 		size_t lpa_size = LOCAL_PARAM_ARRAY_SIZE,
-		size_t ps_size = PROGRAM_STACK_SIZE) : 
+		size_t ps_size = PROGRAM_STACK_SIZE) :
 		Instruction_List(),
 		PC_Register(0),
 		IR_Register(NOP),
-		Program_Stack(ps_size), 
+		Program_Stack(ps_size),
 		Local_Param_Array(lpa_size),
 		Operand_Stack(os_size),
 		exit_flag(0) {}
@@ -97,12 +97,51 @@ protected:
 	long long get_next_n_instruction(unsigned _n) {
 		long long _ret = 0;
 		for (unsigned i = 0; i < _n && i < sizeof(_ret); ++i) {
-			_ret <<= (i * 8);
+			_ret <<= 8;
 			_ret += static_cast<long long>(get_next_Instruction());
 		}
 		return _ret;
 	}
 
+	// for opt_CALL
+	void save_locals_array() {
+		sys_type array_size = static_cast<sys_type>(Local_Param_Array.size());
+		Program_Stack.insert(Program_Stack.end(),
+				Local_Param_Array.begin(), Local_Param_Array.end());
+		Program_Stack.push_back(array_size);
+	}
+
+	void save_operand_stack() {
+		sys_type stack_size = static_cast<sys_type>(Operand_Stack.size());
+		Program_Stack.insert(Program_Stack.end(),
+				Operand_Stack.begin(), Operand_Stack.end());
+		Program_Stack.push_back(stack_size);
+	}
+
+	void save_next_PC() {
+		Program_Stack.push_back(PC_Register);
+	}
+
+	// for opt_RET
+	void load_next_PC() {
+		sys_type PC_n = Program_Stack.back();
+		Program_Stack.pop_back();
+		PC_Register = PC_n;
+	}
+
+	void load_operand_stack() {
+		sys_type stack_size = Program_Stack.back();
+		Program_Stack.pop_back();
+		vector<sys_type>::iterator _it = Program_Stack.end();
+		Operand_Stack.assign(_it - stack_size, _it);
+	}
+
+	void load_locals_array() {
+		sys_type array_size = Program_Stack.back();
+		Program_Stack.pop_back();
+		vector<sys_type>::iterator _it = Program_Stack.end();
+		Local_Param_Array.assign(_it - array_size, _it);
+	}
 
 
 // ----------------------------------------------------------------------------
@@ -149,6 +188,24 @@ protected:
 
 	void opt_EXIT() {
 		exit_flag = true;
+	}
+
+	void opt_RET() {
+		load_next_PC();
+		load_operand_stack();
+		load_locals_array();
+	}
+
+	void opt_CALL() {
+
+		sys_type PC_n = static_cast<sys_type>(get_next_n_instruction(2));
+
+		save_locals_array();
+		save_operand_stack();
+		save_next_PC();
+
+		// update_PC
+		PC_Register = PC_n;
 	}
 
 	// goto
@@ -305,26 +362,36 @@ protected:
 
 // ----------------------------------------------------------------------------
 	/* Instruction Cycle */
-	void initiating_cycle() {
+	inline void initiating_cycle() {
 
 		PC_Register = 0;
 		IR_Register = NOP;
+
+		Instruction_List.push_back(static_cast<bytecode_type>(EXIT));	// guard
+
 		Program_Stack.clear();
+
+		// three guards
+		Program_Stack.push_back(static_cast<sys_type>(0));	// locals array set zero
+		Program_Stack.push_back(static_cast<sys_type>(0));	// operand stack set zero
+		// return to the last instruction, EXIT
+		Program_Stack.push_back(static_cast<sys_type>(Instruction_List.size()));
+
 		Local_Param_Array.clear();
 		Operand_Stack.clear();
 
 		exit_flag = false;
 	}
 
-	void fetch_instruction() {
+	inline void fetch_instruction() {
 		IR_Register = get_next_Instruction();
 	}
 
-	void decode_instruction() {
+	inline void decode_instruction() {
 		/* do nothing */
 	}
 
-	void execute_instruction() {
+	inline void execute_instruction() {
 		switch (IR_Register) {
 		case NOP:
 			opt_NOP(); break;
@@ -344,6 +411,10 @@ protected:
 			opt_PRINT(); break;
 		case EXIT:
 			opt_EXIT(); break;
+		case CALL:
+			opt_CALL(); break;
+		case RET:
+			opt_RET(); break;
 		case IINC:
 			opt_IINC(); break;
 		case BIPUSH:
@@ -368,6 +439,7 @@ protected:
 			opt_JLE(); break;
 		case JGE:
 			opt_JGE(); break;
+
 
 		// move
 		case ISTORE:
@@ -413,7 +485,7 @@ protected:
 		}
 	}
 
-	void cycle_exit_clear_up() {
+	inline void cycle_exit_clear_up() {
 		/* do nothing */
 	}
 
@@ -440,7 +512,7 @@ protected:
 
 	sys_type PC_Register;		// counter
 	bytecode_type IR_Register;		// next instruction
-	vector<char> Program_Stack;		// program stack
+	vector<sys_type> Program_Stack;		// program stack
 	vector<sys_type> Local_Param_Array;		// store local variables
 	vector<sys_type> Operand_Stack;		// store operands
 

@@ -12,6 +12,20 @@ using std::map;
 using std::vector;
 using std::pair;
 
+/*
+	Note:
+		If you want to add some instructions into the instructions
+			set, you should modify three parts of this file.
+		The first is enum, which defines the mnemonics of instructions.
+		The second is the array sz[], which store pairs of mnemonics and its string.
+		The third is the function bytecode_to_instruction().
+
+		By the way, you should add the corresponding opt_INS() 
+			functions and the execute_cycle.
+*/
+
+
+
 namespace ministl {
 
 // instruction bytecode
@@ -21,6 +35,7 @@ enum {
 	NOP = 0,
 
 	EXIT = 128,
+	RET,
 
 	PRINT,
 
@@ -65,6 +80,8 @@ enum {
 	JLE,
 	JNE,
 
+	CALL,
+
 /* 5 byte occupied */
 	LDC,
 };
@@ -74,6 +91,7 @@ enum {
 static pair<const string, int> sz[] = {
 	pair<const string, int>("NOP", NOP),
 	pair<const string, int>("EXIT", EXIT),
+	pair<const string, int>("RET", RET),
 	pair<const string, int>("IADD", IADD),
 	pair<const string, int>("ISUB", ISUB),
 	pair<const string, int>("IMUL", IMUL),
@@ -107,6 +125,7 @@ static pair<const string, int> sz[] = {
 	pair<const string, int>("JL", JL),
 	pair<const string, int>("JLE", JLE),
 	pair<const string, int>("JNE", JNE),
+	pair<const string, int>("CALL", CALL)
 };
 
 static map<string, int> map_for_instr_and_bytecode(
@@ -118,6 +137,7 @@ string bytecode_to_instruction(int _opcode) {
 	switch (_opcode) {
 	case NOP : return "NOP";
 	case EXIT : return "EXIT";
+	case RET : return "RET";
 
 	case IADD : return "IADD";
 	case ISUB : return "ISUB";
@@ -158,6 +178,8 @@ string bytecode_to_instruction(int _opcode) {
 	case JL : return "JL";
 	case JLE : return "JL";
 	case JNE : return "JNE";
+
+	case CALL : return "CALL";
 
 	default: return "Unknown";
 	}

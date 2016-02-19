@@ -5,8 +5,6 @@
 #include <fstream>
 #include "vm.h"
 #include <cstdlib>
-#include <ctime>
-#include <cstdio>
 
 using namespace std;
 
@@ -14,17 +12,22 @@ typedef unsigned char bytecode_type;
 
 int main(int argc, char *argv[]) {
 
+    string addr;
+
 	if (argc == 1) {
-		cerr << "error : no input files" << endl;
-		exit(0);
+		// cerr << "error : no input files" << endl;
+		// exit(0);
+		addr = "C:\\Users\\wh\\Desktop\\vm\\src\\asm\\func.mo";
 	} else if (argc > 2) {
 		cerr << "error : too more arguments" << endl;
 		exit(0);
-	} 
+	} else {
+        addr = argv[1];
+    }
 
 	ifstream fin;
 
-	string addr = argv[1];
+
 	string file_suffix = addr.substr(addr.rfind(".") + 1);
 
 	if (file_suffix != "mo") {
@@ -53,15 +56,7 @@ int main(int argc, char *argv[]) {
 	fin.close();
 	delete[] buffer;
 
-	clock_t first = clock();
-
 	vm.run();		// run
-	
-	clock_t last = clock();
-	double time_waste = static_cast<double>(last - first) / CLOCKS_PER_SEC;
-	
-	printf("\nProcess execution time : %.3lfs\n", time_waste);
-	system("pause");
 
 	return 0;
 }
