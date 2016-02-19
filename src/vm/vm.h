@@ -6,6 +6,7 @@
 
 #include <iostream>
 #include <vector>
+#include <cstdio>
 #include <stdint.h>		// for int8_t and so on
 
 #include "../mini_instructions.h"
@@ -25,7 +26,7 @@ using std::endl;
 using std::string;
 
 typedef unsigned char bytecode_type;
-typedef int32_t sys_type;	// 32bit x86
+typedef uint32_t sys_type;	// 32bit x86
 
 class minivm {
 public:
@@ -94,7 +95,7 @@ protected:
 		return Instruction_List[PC_Register++];
 	}
 
-	long long get_next_n_instruction(unsigned _n) {
+	long long get_next_n_instruction(size_t _n) {
 		long long _ret = 0;
 		for (unsigned i = 0; i < _n && i < sizeof(_ret); ++i) {
 			_ret <<= 8;
@@ -150,32 +151,70 @@ protected:
 		/* do nothing */
 	}
 
-	// arithmetic
+	// Integral arithmetic
 	void opt_IADD() {
 		sys_type _val1 = pop_operand();
 		sys_type _val2 = pop_operand();
-		_val2 += _val1;
+		*((int *)&_val2) += *((int *)&_val1);
 		push_operand(_val2);
 	}
 
 	void opt_ISUB() {
 		sys_type _val1 = pop_operand();
 		sys_type _val2 = pop_operand();
-		_val2 -= _val1;
+		*((int *)&_val2) -= *((int *)&_val1);
 		push_operand(_val2);
 	}
 
 	void opt_IMUL() {
 		sys_type _val1 = pop_operand();
 		sys_type _val2 = pop_operand();
-		_val2 *= _val1;
+		*((int *)&_val2) *= *((int *)&_val1);
 		push_operand(_val2);
 	}
 
 	void opt_IDIV() {
 		sys_type _val1 = pop_operand();
 		sys_type _val2 = pop_operand();
-		_val2 /= _val1;
+		*((int *)&_val2) /= *((int *)&_val1);
+		push_operand(_val2);
+	}
+
+	void opt_MOD() {
+		sys_type _val1 = pop_operand();
+		sys_type _val2 = pop_operand();
+		*((int *)&_val2) %= *((int *)&_val1);
+		push_operand(_val2);
+	}
+
+
+	// Floating arithmetic
+	
+	void opt_FADD() {
+		sys_type _val1 = pop_operand();
+		sys_type _val2 = pop_operand();
+		*((float *)&_val2) += *((float *)&_val1);
+		push_operand(_val2);
+	}
+
+	void opt_FSUB() {
+		sys_type _val1 = pop_operand();
+		sys_type _val2 = pop_operand();
+		*((float *)&_val2) -= *((float *)&_val1);
+		push_operand(_val2);
+	}
+
+	void opt_FMUL() {
+		sys_type _val1 = pop_operand();
+		sys_type _val2 = pop_operand();
+		*((float *)&_val2) *= *((float *)&_val1);
+		push_operand(_val2);
+	}
+
+	void opt_FDIV() {
+		sys_type _val1 = pop_operand();
+		sys_type _val2 = pop_operand();
+		*((float *)&_val2) /= *((float *)&_val1);
 		push_operand(_val2);
 	}
 
@@ -186,13 +225,23 @@ protected:
 		cout << _val;
 	}
 
+	void opt_IPRINT() {
+		sys_type _val = pop_operand();
+		printf("%d", *((int *)&_val));
+	}
+
+	void opt_FPRINT() {
+		sys_type _val = pop_operand();
+		printf("%f", *((float *)&_val));
+	}
+
 	void opt_EXIT() {
 		exit_flag = true;
 	}
 
 	void opt_RET() {
 		load_next_PC();
-		load_operand_stack();
+		// load_operand_stack();
 		load_locals_array();
 	}
 
@@ -201,7 +250,7 @@ protected:
 		sys_type PC_n = static_cast<sys_type>(get_next_n_instruction(2));
 
 		save_locals_array();
-		save_operand_stack();
+		// save_operand_stack();
 		save_next_PC();
 
 		// update_PC
@@ -218,42 +267,42 @@ protected:
 		sys_type PC_n = static_cast<sys_type>(get_next_n_instruction(2));
 		sys_type _val = pop_operand();
 
-		if (_val == 0) { PC_Register = PC_n; }
+		if (*((int*)&_val) == 0) { PC_Register = PC_n; }
 	}
 
 	void opt_JNE() {
 		sys_type PC_n = static_cast<sys_type>(get_next_n_instruction(2));
 		sys_type _val = pop_operand();
 
-		if (_val != 0) { PC_Register = PC_n; }
+		if (*((int*)&_val) != 0) { PC_Register = PC_n; }
 	}
 
 	void opt_JL() {
 		sys_type PC_n = static_cast<sys_type>(get_next_n_instruction(2));
 		sys_type _val = pop_operand();
 
-		if (_val < 0) { PC_Register = PC_n; }
+		if (*((int*)&_val) < 0) { PC_Register = PC_n; }
 	}
 
 	void opt_JLE() {
 		sys_type PC_n = static_cast<sys_type>(get_next_n_instruction(2));
 		sys_type _val = pop_operand();
 
-		if (_val <= 0) { PC_Register = PC_n; }
+		if (*((int*)&_val) <= 0) { PC_Register = PC_n; }
 	}
 
 	void opt_JG() {
 		sys_type PC_n = static_cast<sys_type>(get_next_n_instruction(2));
 		sys_type _val = pop_operand();
 
-		if (_val > 0) { PC_Register = PC_n; }
+		if (*((int*)&_val) > 0) { PC_Register = PC_n; }
 	}
 
 	void opt_JGE() {
 		sys_type PC_n = static_cast<sys_type>(get_next_n_instruction(2));
 		sys_type _val = pop_operand();
 
-		if (_val >= 0) { PC_Register = PC_n; }
+		if (*((int*)&_val) >= 0) { PC_Register = PC_n; }
 	}
 
 	void opt_BIPUSH() {
@@ -269,30 +318,45 @@ protected:
 	}
 
 	void opt_IINC() {
-		int8_t _val1 = get_next_Instruction();
-		int8_t _val2 = get_next_Instruction();
+		bytecode_type _val1 = get_next_Instruction();
+		int _val2 = static_cast<int>(get_next_Instruction());
 
 		size_t _n = static_cast<size_t>(_val1);
 		sys_type _val = get_variable(_n);
-		_val += _val2;
+		*((int*)&_val) += _val2;
 
 		set_variable(_n, static_cast<sys_type>(_val));
 	}
 
 	/* move function */
 	void opt_ISTORE() {
-		int _n = static_cast<int>(get_next_Instruction());
+		size_t _n = static_cast<size_t>(get_next_Instruction());
 		sys_type _val = pop_operand();
 		set_variable(_n, _val);
 	}
 
 	void opt_ILOAD() {
-		int _n = static_cast<int>(get_next_Instruction());
+		size_t _n = static_cast<size_t>(get_next_Instruction());
 		push_operand(get_variable(_n));
 	}
 
 	void opt_ICONST() {
 		opt_BIPUSH();
+	}
+
+	void opt_FSTORE() {
+		size_t _n = static_cast<size_t>(get_next_Instruction());
+		sys_type _val = pop_operand();
+		set_variable(_n, _val);
+	}
+
+	void opt_FLOAD() {
+		size_t _n = static_cast<size_t>(get_next_Instruction());
+		push_operand(get_variable(_n));
+	}
+
+	void opt_FCONST() {
+		opt_LDC();
 	}
 
 	// Will be discarded
@@ -371,9 +435,9 @@ protected:
 
 		Program_Stack.clear();
 
-		// three guards
+		// guards
 		Program_Stack.push_back(static_cast<sys_type>(0));	// locals array set zero
-		Program_Stack.push_back(static_cast<sys_type>(0));	// operand stack set zero
+		// Program_Stack.push_back(static_cast<sys_type>(0));	// operand stack set zero
 		// return to the last instruction, EXIT
 		Program_Stack.push_back(static_cast<sys_type>(Instruction_List.size()));
 
@@ -396,7 +460,7 @@ protected:
 		case NOP:
 			opt_NOP(); break;
 
-		// math
+		// Integral
 		case IADD:
 			opt_IADD(); break;
 		case ISUB:
@@ -405,10 +469,26 @@ protected:
 			opt_IMUL(); break;
 		case IDIV:
 			opt_IDIV(); break;
+		case MOD:
+			opt_MOD(); break;
+
+		// Float
+		case FADD:
+			opt_FADD(); break;
+		case FSUB:
+			opt_FSUB(); break;
+		case FMUL:
+			opt_FMUL(); break;
+		case FDIV:
+			opt_FDIV(); break;
 
 		// call
 		case PRINT:
 			opt_PRINT(); break;
+		case IPRINT:
+			opt_IPRINT(); break;
+		case FPRINT:
+			opt_FPRINT(); break;
 		case EXIT:
 			opt_EXIT(); break;
 		case CALL:
@@ -448,6 +528,12 @@ protected:
 			opt_ILOAD(); break;
 		case ICONST:
 			opt_ICONST(); break;
+		case FSTORE:
+			opt_FSTORE(); break;
+		case FLOAD:
+			opt_FLOAD(); break;
+		case FCONST:
+			opt_FCONST(); break;
 
 		// Will be discarded
 		case ISTORE_0:

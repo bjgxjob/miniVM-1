@@ -4,20 +4,20 @@
 
 _func:
 	sipush 999
-	print
+	iprint
 	ret
 
 _main:
 	iconst_1
 	istore_1
 	iload_1
-	print
+	iprint
 	iconst_2
 	istore_2
 	iload_2
-	print
+	iprint
 	iload_1
 	iload_2
 	call _func
 	iadd
-	print
+	iprint

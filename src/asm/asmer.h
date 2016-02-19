@@ -157,10 +157,9 @@ public:
 			_ss_tmp >> _integral;
 			return _integral;
 		} else {	// float
-			double _float;
+			float _float;
 			_ss_tmp >> _float;
-			long long *trans_point = (long long *)&_float;
-			return *trans_point;
+			return static_cast<long long>(*((unsigned*)&_float));
 		}
 	}
 
@@ -293,8 +292,13 @@ public:
 
 			switch (_instr) {
 			case BIPUSH:
+			case ISTORE:
+			case ILOAD:
+			case FSTORE:
+			case FLOAD:
 				add_bytecodes_to_ret(_num, 1); break;
 			case SIPUSH:
+			case ICONST:
 				add_bytecodes_to_ret(_num, 2); break;
 			case IINC:
 				add_bytecodes_to_ret(_num, 1);
@@ -321,6 +325,7 @@ public:
 						+ "\' should be a label");
 				} break;
 			case LDC:
+			case FCONST:
 				add_bytecodes_to_ret(_num, 4); break;
 			default:
 				throw_error("Unknown instruction \"" + _tk.literal + "\"");

@@ -38,15 +38,19 @@ enum {
 	RET,
 
 	PRINT,
+	IPRINT,
+	FPRINT,
 
 	IADD,
 	ISUB,
 	IMUL,
 	IDIV,
+	MOD,
 
-	ISTORE,
-	ILOAD,
-	ICONST,
+	FADD,
+	FSUB,
+	FMUL,
+	FDIV,
 
 	ISTORE_0,
 	ISTORE_1,
@@ -67,6 +71,14 @@ enum {
 
 /* 2 byte occupied */
 	BIPUSH,
+
+	ISTORE,
+	ILOAD,
+	ICONST,
+
+	FSTORE,
+	FLOAD,
+	FCONST,
 
 /* 3 byte occupied */
 	SIPUSH,
@@ -125,7 +137,18 @@ static pair<const string, int> sz[] = {
 	pair<const string, int>("JL", JL),
 	pair<const string, int>("JLE", JLE),
 	pair<const string, int>("JNE", JNE),
-	pair<const string, int>("CALL", CALL)
+	pair<const string, int>("CALL", CALL),
+
+	pair<const string, int>("IPRINT", IPRINT),
+	pair<const string, int>("FPRINT", FPRINT),
+	pair<const string, int>("MOD", MOD),
+	pair<const string, int>("FADD", FADD),
+	pair<const string, int>("FSUB", FSUB),
+	pair<const string, int>("FMUL", FMUL),
+	pair<const string, int>("FDIV", FDIV),
+	pair<const string, int>("FSTORE", FSTORE),
+	pair<const string, int>("FLOAD", FLOAD),
+	pair<const string, int>("FCONST", FCONST),
 };
 
 static map<string, int> map_for_instr_and_bytecode(
@@ -176,10 +199,20 @@ string bytecode_to_instruction(int _opcode) {
 	case JG : return "JG";
 	case JGE : return "JGE";
 	case JL : return "JL";
-	case JLE : return "JL";
+	case JLE : return "JLE";
 	case JNE : return "JNE";
-
 	case CALL : return "CALL";
+
+	case IPRINT : return "IPRINT";
+	case FPRINT : return "FPRINT";
+	case MOD : return "MOD";
+	case FADD : return "FADD";
+	case FSUB : return "FSUB";
+	case FMUL : return "FMUL";
+	case FDIV : return "FDIV";
+	case FSTORE : return "FSTORE";
+	case FLOAD : return "FLOAD";
+	case FCONST : return "FCONST";
 
 	default: return "Unknown";
 	}
