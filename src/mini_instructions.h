@@ -74,15 +74,15 @@ enum {
 
 	ISTORE,
 	ILOAD,
-	ICONST,
-
 	FSTORE,
 	FLOAD,
-	FCONST,
+	
 
 /* 3 byte occupied */
 	SIPUSH,
 	IINC,
+
+	ICONST,
 
 	JMP,
 	JE,
@@ -96,6 +96,7 @@ enum {
 
 /* 5 byte occupied */
 	LDC,
+	FCONST,
 };
 
 

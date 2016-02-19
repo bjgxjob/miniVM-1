@@ -4,8 +4,7 @@
 
 	iconst_0			# sum
 	istore_0 			# 将sum = 0存到local_0
-#	ldc  100 			# i
-	bipush  100
+	ldc  100 			# i
 	istore_1 			# 将i = 100存到local_1
 Loop:
 	iload_1 			# 取出i
@@ -18,6 +17,6 @@ Loop:
 	jmp  Loop 			# 循环
 End:
 	iload_0 			# sum待输出
-	print 				# print to stdout
+	iprint 				# print to stdout
 	exit
 

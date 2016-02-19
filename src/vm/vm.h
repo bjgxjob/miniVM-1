@@ -319,13 +319,13 @@ protected:
 
 	void opt_IINC() {
 		bytecode_type _val1 = get_next_Instruction();
-		int _val2 = static_cast<int>(get_next_Instruction());
+		int8_t _val2 = static_cast<int8_t>(get_next_Instruction());
 
 		size_t _n = static_cast<size_t>(_val1);
 		sys_type _val = get_variable(_n);
 		*((int*)&_val) += _val2;
 
-		set_variable(_n, static_cast<sys_type>(_val));
+		set_variable(_n, _val);
 	}
 
 	/* move function */

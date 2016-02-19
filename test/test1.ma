@@ -26,7 +26,7 @@ Loop:
 	isub		# 100 - i
 	jl  End		# if 100 - i < 0 than goto End
 	iload_1		# push i
-	print		# print i
+	iprint		# print i
 	iinc  1, 1	# i++
 	jmp  Loop	# goto 
 End:
