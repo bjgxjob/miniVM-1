@@ -18,5 +18,6 @@ Loop:
 	jmp  Loop 			# 循环
 End:
 	iload_0 			# sum待输出
-	print 				# 输出到屏幕上
-	exit 				# 结束进程
+	print 				# print to stdout
+	exit
+
