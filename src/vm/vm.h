@@ -135,6 +135,7 @@ protected:
 		Program_Stack.pop_back();
 		vector<sys_type>::iterator _it = Program_Stack.end();
 		Operand_Stack.assign(_it - stack_size, _it);
+		Program_Stack.erase(_it - stack_size, _it);
 	}
 
 	void load_locals_array() {
@@ -142,6 +143,7 @@ protected:
 		Program_Stack.pop_back();
 		vector<sys_type>::iterator _it = Program_Stack.end();
 		Local_Param_Array.assign(_it - array_size, _it);
+		Program_Stack.erase(_it - stack_size, _it);
 	}
 
 
@@ -233,6 +235,11 @@ protected:
 	void opt_FPRINT() {
 		sys_type _val = pop_operand();
 		printf("%f", *((float *)&_val));
+	}
+
+	void opt_CPRINT() {
+		sys_type _val = pop_operand();
+		printf("%c", *((char *)&_val));
 	}
 
 	void opt_EXIT() {
@@ -489,6 +496,8 @@ protected:
 			opt_IPRINT(); break;
 		case FPRINT:
 			opt_FPRINT(); break;
+		case CPRINT:
+			opt_CPRINT(); break;
 		case EXIT:
 			opt_EXIT(); break;
 		case CALL:

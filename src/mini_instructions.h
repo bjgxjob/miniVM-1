@@ -40,6 +40,7 @@ enum {
 	PRINT,
 	IPRINT,
 	FPRINT,
+	CPRINT,
 
 	IADD,
 	ISUB,
@@ -142,6 +143,7 @@ static pair<const string, int> sz[] = {
 
 	pair<const string, int>("IPRINT", IPRINT),
 	pair<const string, int>("FPRINT", FPRINT),
+	pair<const string, int>("CPRINT", CPRINT),
 	pair<const string, int>("MOD", MOD),
 	pair<const string, int>("FADD", FADD),
 	pair<const string, int>("FSUB", FSUB),
@@ -206,6 +208,7 @@ string bytecode_to_instruction(int _opcode) {
 
 	case IPRINT : return "IPRINT";
 	case FPRINT : return "FPRINT";
+	case CPRINT : return "CPRINT";
 	case MOD : return "MOD";
 	case FADD : return "FADD";
 	case FSUB : return "FSUB";

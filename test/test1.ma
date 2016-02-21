@@ -27,6 +27,8 @@ Loop:
 	jl  End		# if 100 - i < 0 than goto End
 	iload_1		# push i
 	iprint		# print i
+	bipush	32	# char ' '
+	cprint		# print space
 	iinc  1, 1	# i++
 	jmp  Loop	# goto 
 End:
