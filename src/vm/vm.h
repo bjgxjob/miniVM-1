@@ -143,7 +143,7 @@ protected:
 		Program_Stack.pop_back();
 		vector<sys_type>::iterator _it = Program_Stack.end();
 		Local_Param_Array.assign(_it - array_size, _it);
-		Program_Stack.erase(_it - stack_size, _it);
+		Program_Stack.erase(_it - array_size, _it);
 	}
 
 
