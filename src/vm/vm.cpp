@@ -61,7 +61,17 @@ int main(int argc, char *argv[]) {
 	double time_waste = static_cast<double>(last - first) / CLOCKS_PER_SEC;
 	
 	printf("\nProcess execution time : %.3lfs\n", time_waste);
+	
+#ifdef _WIN32
 	system("pause");
+#elif _WIN64
+	system("pause");
+#elif linux
+	/* do nothing */;
+#else
+	cout << "Press enter to continue..." << endl;
+	getchar();
+#endif
 
 	return 0;
 }
