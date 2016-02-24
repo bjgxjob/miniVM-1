@@ -36,6 +36,7 @@ enum {
 
 	EXIT = 128,
 	RET,
+	INFO,
 
 	PRINT,
 	IPRINT,
@@ -69,6 +70,9 @@ enum {
 	ICONST_3,
 	ICONST_4,
 	ICONST_5,
+
+	DUP_1,
+	DUP_2,
 
 /* 2 byte occupied */
 	BIPUSH,
@@ -106,6 +110,8 @@ static pair<const string, int> sz[] = {
 	pair<const string, int>("NOP", NOP),
 	pair<const string, int>("EXIT", EXIT),
 	pair<const string, int>("RET", RET),
+	pair<const string, int>("INFO", INFO),
+
 	pair<const string, int>("IADD", IADD),
 	pair<const string, int>("ISUB", ISUB),
 	pair<const string, int>("IMUL", IMUL),
@@ -133,6 +139,8 @@ static pair<const string, int> sz[] = {
 	pair<const string, int>("ICONST_3", ICONST_3),
 	pair<const string, int>("ICONST_4", ICONST_4),
 	pair<const string, int>("ICONST_5", ICONST_5),
+	pair<const string, int>("DUP_1", DUP_1),
+	pair<const string, int>("DUP_2", DUP_2),
 	pair<const string, int>("JE", JE),
 	pair<const string, int>("JG", JG),
 	pair<const string, int>("JGE", JGE),
@@ -164,6 +172,7 @@ string bytecode_to_instruction(int _opcode) {
 	case NOP : return "NOP";
 	case EXIT : return "EXIT";
 	case RET : return "RET";
+	case INFO : return "INFO";
 
 	case IADD : return "IADD";
 	case ISUB : return "ISUB";
@@ -197,6 +206,9 @@ string bytecode_to_instruction(int _opcode) {
 	case ICONST_3 : return "ICONST_3";
 	case ICONST_4 : return "ICONST_4";
 	case ICONST_5 : return "ICONST_5";
+
+	case DUP_1 : return "DUP_1";
+	case DUP_2 : return "DUP_2";
 
 	case JE : return "JE";
 	case JG : return "JG";

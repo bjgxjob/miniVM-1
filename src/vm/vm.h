@@ -11,11 +11,16 @@
 
 #include "../mini_instructions.h"
 
+#define SHOW_HEX 0
+#define SHOW_DEC (!SHOW_HEX)
+
+
 /* Constand value */
 
 #define LOCAL_PARAM_ARRAY_SIZE 8
 #define OPERAND_STACK_SIZE 4
 #define PROGRAM_STACK_SIZE 256
+#define INFO_A_LINE_SIZE 10
 
 namespace ministl {
 
@@ -146,6 +151,57 @@ protected:
 		Program_Stack.erase(_it - array_size, _it);
 	}
 
+	void show_operand_stack_info() {
+		printf("Operand Stack Information : \n");
+		for (unsigned i = 0; i < Operand_Stack.size(); i++) {
+		#if SHOW_HEX
+			printf("%x ", Operand_Stack[i]);
+		#endif
+		#if SHOW_DEC
+			printf("%d ", Operand_Stack[i]);
+		#endif
+			if ((i + 1) % INFO_A_LINE_SIZE == 0) { printf("\n"); }
+		}
+	}
+
+	void show_locals_array_info() {
+		printf("Local Param Array Information : \n");
+		for (unsigned i = 0; i < Local_Param_Array.size(); i++) {
+		#if SHOW_HEX
+			printf("%x ", Local_Param_Array[i]);
+		#endif
+		#if SHOW_DEC
+			printf("%d ", Local_Param_Array[i]);
+		#endif
+			if ((i + 1) % INFO_A_LINE_SIZE == 0) { printf("\n"); }
+		}
+	}
+
+	void show_program_stack_info() {
+		printf("Program Stack Information : \n");
+		for (unsigned i = 0; i < Program_Stack.size(); i++) {
+		#if SHOW_HEX
+			printf("%x ", Program_Stack[i]);
+		#endif
+		#if SHOW_DEC
+			printf("%d ", Program_Stack[i]);
+		#endif
+			if ((i + 1) % INFO_A_LINE_SIZE == 0) { printf("\n"); }
+		}
+	}
+
+	void show_vm_info() {
+		printf("*************************************************\n");
+		show_program_stack_info();	putchar('\n');
+		show_operand_stack_info();	putchar('\n');
+		show_locals_array_info();	putchar('\n');
+		printf("*************************************************\n");
+	}
+
+	void duplicate_n_at_stack_top(size_t n) {
+		vector<sys_type>::iterator _it = Operand_Stack.end();
+		Operand_Stack.insert(_it, _it - n, _it);
+	}
 
 // ----------------------------------------------------------------------------
 	/* Instruction Opreations */
@@ -427,6 +483,17 @@ protected:
 		push_operand(get_variable(3));
 	}
 
+	void opt_INFO() {
+		show_vm_info();
+	}
+
+	void opt_DUP_1() {
+		duplicate_n_at_stack_top(1);
+	}
+
+	void opt_DUP_2() {
+		duplicate_n_at_stack_top(2);
+	}
 
 
 
@@ -444,11 +511,9 @@ protected:
 
 		// guards
 		Program_Stack.push_back(static_cast<sys_type>(0));	// locals array set zero
-		// Program_Stack.push_back(static_cast<sys_type>(0));	// operand stack set zero
 		// return to the last instruction, EXIT
 		Program_Stack.push_back(static_cast<sys_type>(Instruction_List.size()));
 
-		Local_Param_Array.clear();
 		Operand_Stack.clear();
 
 		exit_flag = false;
@@ -466,6 +531,8 @@ protected:
 		switch (IR_Register) {
 		case NOP:
 			opt_NOP(); break;
+		case INFO:
+			opt_INFO(); break;
 
 		// Integral
 		case IADD:
@@ -528,6 +595,12 @@ protected:
 			opt_JLE(); break;
 		case JGE:
 			opt_JGE(); break;
+
+		// duplicate
+		case DUP_1:
+			opt_DUP_1(); break;
+		case DUP_2:
+			opt_DUP_2(); break;
 
 
 		// move

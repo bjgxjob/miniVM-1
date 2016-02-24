@@ -55,7 +55,7 @@ int main(int argc, char *argv[]) {
 	
 	printf("\nProcess execution time : %.3lfs\n", time_waste);
 #ifdef _WIN32
-	system("pause");
+	// system("pause");
 #elif _WIN64
 	system("pause");
 #elif linux
