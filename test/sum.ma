@@ -1,5 +1,6 @@
 # sum.ma
 
+.limit stack 4
 
 _main:
 	iconst_5

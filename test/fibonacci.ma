@@ -1,5 +1,9 @@
 # fibonacii.ma
 
+.limit stack 16
+.limit locals 4
+
+
 _main:
 	bipush  30
 	call _fib1

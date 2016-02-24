@@ -96,7 +96,7 @@ protected:
 		return Local_Param_Array[_n];
 	}
 
-	inline bytecode_type get_next_Instruction() {
+	inline bytecode_type get_next_instruction() {
 		return Instruction_List[PC_Register++];
 	}
 
@@ -104,7 +104,7 @@ protected:
 		long long _ret = 0;
 		for (unsigned i = 0; i < _n && i < sizeof(_ret); ++i) {
 			_ret <<= 8;
-			_ret += static_cast<long long>(get_next_Instruction());
+			_ret += static_cast<long long>(get_next_instruction());
 		}
 		return _ret;
 	}
@@ -202,6 +202,15 @@ protected:
 		vector<sys_type>::iterator _it = Operand_Stack.end();
 		Operand_Stack.insert(_it, _it - n, _it);
 	}
+
+	void change_operand_stack_size(size_t n) {
+		Operand_Stack.reserve(n);
+	}
+
+	void change_locals_param_array_size(size_t n) {
+		Local_Param_Array.resize(n);
+	}
+
 
 // ----------------------------------------------------------------------------
 	/* Instruction Opreations */
@@ -381,8 +390,8 @@ protected:
 	}
 
 	void opt_IINC() {
-		bytecode_type _val1 = get_next_Instruction();
-		int8_t _val2 = static_cast<int8_t>(get_next_Instruction());
+		bytecode_type _val1 = get_next_instruction();
+		int8_t _val2 = static_cast<int8_t>(get_next_instruction());
 
 		size_t _n = static_cast<size_t>(_val1);
 		sys_type _val = get_variable(_n);
@@ -393,13 +402,13 @@ protected:
 
 	/* move function */
 	void opt_ISTORE() {
-		size_t _n = static_cast<size_t>(get_next_Instruction());
+		size_t _n = static_cast<size_t>(get_next_instruction());
 		sys_type _val = pop_operand();
 		set_variable(_n, _val);
 	}
 
 	void opt_ILOAD() {
-		size_t _n = static_cast<size_t>(get_next_Instruction());
+		size_t _n = static_cast<size_t>(get_next_instruction());
 		push_operand(get_variable(_n));
 	}
 
@@ -408,13 +417,13 @@ protected:
 	}
 
 	void opt_FSTORE() {
-		size_t _n = static_cast<size_t>(get_next_Instruction());
+		size_t _n = static_cast<size_t>(get_next_instruction());
 		sys_type _val = pop_operand();
 		set_variable(_n, _val);
 	}
 
 	void opt_FLOAD() {
-		size_t _n = static_cast<size_t>(get_next_Instruction());
+		size_t _n = static_cast<size_t>(get_next_instruction());
 		push_operand(get_variable(_n));
 	}
 
@@ -495,6 +504,11 @@ protected:
 		duplicate_n_at_stack_top(2);
 	}
 
+	void opt_PUTS() {
+		sys_type _pos = static_cast<sys_type>(get_next_n_instruction(4));
+		printf("%s", (const char*)&Instruction_List[_pos]);
+	}
+
 
 
 
@@ -511,16 +525,48 @@ protected:
 
 		// guards
 		Program_Stack.push_back(static_cast<sys_type>(0));	// locals array set zero
+		Program_Stack.push_back(static_cast<sys_type>(Instruction_List.size()) - 1);
 		// return to the last instruction, EXIT
-		Program_Stack.push_back(static_cast<sys_type>(Instruction_List.size()));
 
 		Operand_Stack.clear();
 
 		exit_flag = false;
 	}
 
+	inline void preproccess() {
+		sys_type starting_PC = static_cast<sys_type>(get_next_n_instruction(4));
+
+		sys_type end_of_static_area_PC = static_cast<sys_type>(get_next_n_instruction(4));
+		PC_Register = end_of_static_area_PC;
+
+		while (PC_Register < starting_PC) {
+			bytecode_type _instr = get_next_instruction();
+			if (_instr == DIRECTIVE_LIMIT) {
+				_instr = get_next_instruction();
+				if (_instr == DIRECTIVE_STACK) {
+					size_t stack_size = static_cast<size_t>(get_next_n_instruction(4));
+					change_operand_stack_size(stack_size);
+				} else if (_instr == DIRECTIVE_LOCALS) {
+					size_t array_size = static_cast<size_t>(get_next_n_instruction(4));
+					change_locals_param_array_size(array_size);
+				} else {
+					throw_error("can not identify the asm directive after the \"limit\"");
+					break;
+				}
+			} else if (_instr == DIRECTIVE_STRING) {
+				// TODO();
+			} else {
+				throw_error("can not identify the asm directive");
+				break;
+			}
+		}
+		
+		/* do something */
+		PC_Register = starting_PC;
+	}
+
 	inline void fetch_instruction() {
-		IR_Register = get_next_Instruction();
+		IR_Register = get_next_instruction();
 	}
 
 	inline void decode_instruction() {
@@ -647,6 +693,9 @@ protected:
 		case ILOAD_3:
 			opt_ILOAD_3(); break;
 
+		// string
+		case PUTS:
+			opt_PUTS(); break;
 
 		default:
 			throw_error("unknown instruction : ", IR_Register);
@@ -660,7 +709,7 @@ protected:
 	void fetch_decode_execute_cycle() {
 
 		initiating_cycle();
-
+		preproccess();
 		while (!exit_flag) {
 
 			fetch_instruction();

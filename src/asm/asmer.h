@@ -36,7 +36,7 @@ using std::stringstream;
 
 enum token_type {
 	unknown, punctuation, label, mnemonic, integer, floating_number, varname, number,
-	end_of_line
+	str, end_of_line
 };
 
 struct token {
@@ -76,6 +76,7 @@ public:
 	/* Aux Functions */
 	void throw_error(const string& _err_str) {
 		cerr << "[Error] : " << _err_str << endl;
+		throw "miniASM Syntax Error";
 	}
 
 	void ignore_space() {	// for scanner
@@ -147,6 +148,18 @@ public:
 		}
 	}
 
+	void add_to_global_variable_map(const pair<string, size_t>& _pair) {
+		global_variable_map.insert(_pair);
+	}
+
+	bool is_in_global_variable_map(const string& _varname) {
+		return global_variable_map.find(_varname) != global_variable_map.end();
+	}
+
+	size_t get_global_variable_pos(const string& _varname) {
+		return global_variable_map[_varname];
+	}
+
 	long long literal_to_number(const string& _literal) {
 
 		stringstream _ss_tmp;
@@ -184,6 +197,37 @@ public:
 		return line.substr(left, index_of_line - left);
 	}
 
+	string get_next_string() {	// for scanner
+		size_t left = ++index_of_line;
+		// i.e. s = " abc123, \t\"(%s)\"hey\n ";
+		string _str;
+		while (index_of_line < line_size && line[index_of_line] != '\"') {
+			if (line[index_of_line] != '\\') {
+				_str += line[index_of_line++];
+			} else {
+				++index_of_line;
+				switch(line[index_of_line++]) {
+				case 'a': _str += '\a'; break;
+				case 'b': _str += '\b'; break;
+				case 'f': _str += '\f'; break;
+				case 'n': _str += '\n'; break;
+				case 'r': _str += '\r'; break;
+				case 't': _str += '\t'; break;
+				case 'v': _str += '\v'; break;
+				case '\\': _str += '\\'; break;
+				case '?': _str += '\?'; break;
+				case '\'': _str += '\''; break;
+				case '\"': _str += '\"'; break;
+				case '0': _str += '\0'; break;
+
+				case 'x': index_of_line += 2 ; break;	// hex TODO();
+				}
+			}
+		}
+		++index_of_line;
+		return _str;
+	}
+
 	token next_token() {	// for scanner
 		ignore_space();
 		if (index_of_line >= line_size) { return token(end_of_line, "\n"); }
@@ -191,6 +235,9 @@ public:
 		char first_char = line[index_of_line++];
 		if (first_char == '.') {
 			return token(punctuation, ".");
+		} else if (first_char == '\"') {
+			--index_of_line;
+			return token(str, get_next_string());
 		} else if (first_char == ':') {
 			return token(punctuation, ":");
 		} else if (first_char == ',') {
@@ -324,6 +371,20 @@ public:
 						+ _tk.literal
 						+ "\' should be a label");
 				} break;
+			case PUTS:
+				if (_tk_tmp.type == varname) {
+					if (!is_in_global_variable_map(_tk_tmp.literal)) {
+						throw_error("did not have the global variable \'"
+							+ _tk_tmp.literal + "\'");
+					} else {
+						size_t _pos = get_global_variable_pos(_tk_tmp.literal);
+						add_bytecodes_to_ret(static_cast<long long>(_pos), 4);
+					}
+				} else {
+					throw_error("the operand of \'"
+						+ _tk.literal
+						+ "\' should be a variable name");
+				} break;
 			case LDC:
 			case FCONST:
 				add_bytecodes_to_ret(_num, 4); break;
@@ -351,6 +412,88 @@ public:
 	}
 
 
+	void preprocess_asm_directive() {
+		token _tk = next_token();
+		if (_tk == token(varname, "limit")) {
+			_tk = next_token();
+			if (_tk == token(varname, "stack")) {
+				_tk = next_token();
+				if (_tk.type == number) {
+					long long _num = literal_to_number(_tk.literal);
+				#if 0
+					add_bytecodes_to_ret(DIRECTIVE_LIMIT, INSTRUCTION_BYTES);
+					add_bytecodes_to_ret(DIRECTIVE_STACK, INSTRUCTION_BYTES);
+					add_bytecodes_to_ret(_num, 4);
+				#endif
+					asm_directive_area.push_back(DIRECTIVE_LIMIT);
+					asm_directive_area.push_back(DIRECTIVE_STACK);
+					size_t _occupied_size = 4;
+					while (_occupied_size--) {
+						asm_directive_area.push_back(
+							static_cast<bytecode_type>(_num >> (_occupied_size * 8))
+						);
+					}
+				} else {
+					throw_error("expected a number of operand stack size");
+				}
+			} else if (_tk == token(varname, "locals")) {
+				_tk = next_token();
+				if (_tk.type == number) {
+					long long _num = literal_to_number(_tk.literal);
+				#if 0
+					add_bytecodes_to_ret(DIRECTIVE_LIMIT, INSTRUCTION_BYTES);
+					add_bytecodes_to_ret(DIRECTIVE_LOCALS, INSTRUCTION_BYTES);
+					add_bytecodes_to_ret(_num, 4);
+				#endif
+					asm_directive_area.push_back(DIRECTIVE_LIMIT);
+					asm_directive_area.push_back(DIRECTIVE_LOCALS);
+					size_t _occupied_size = 4;
+					while (_occupied_size--) {
+						asm_directive_area.push_back(
+							static_cast<bytecode_type>(_num >> (_occupied_size * 8))
+						);
+					}
+				} else {
+					throw_error("expected a number of locals param array size");
+				}
+			} else {
+				throw_error("could not identify the operand \'"
+					+ _tk.literal
+					+ "\'. (maybe you mean \'stack\' or \'locals\'?)");
+			}
+		} else if (_tk == token(varname, "string")) {
+			_tk = next_token();
+			if (_tk.type == varname) {
+				if (is_in_global_variable_map(_tk.literal)) {
+					throw_error("redefined global variable \'"
+						+ _tk.literal + "\'");
+				}
+				add_to_global_variable_map(
+					pair<string, size_t>(_tk.literal, current_position())
+				);
+
+				_tk = next_token();
+				if (_tk.type == str) {
+					const char* _first = static_cast<const char*>(_tk.literal.c_str());
+					const char* _last = _first + _tk.literal.size() + 1;
+					ret.insert(ret.end(), _first, _last);
+				} else {
+					throw_error("expected a string literal");
+				}
+			} else {
+				throw_error("expected a string name after the \'.string\'");
+			}
+		} else {
+			throw_error("could not identify the assembly directive \'"
+				+ _tk.literal + "\'");
+		}
+	}
+
+	void fill_asm_directive() {
+		ret.insert(ret.end(), 
+			asm_directive_area.begin(), asm_directive_area.end());
+	}
+
 	/* Initializer */
 	void init() {
 
@@ -363,6 +506,11 @@ public:
 		token_stream.clear();
 		label_map.clear();
 		label_fill_list.clear();
+		asm_directive_area.reserve(16 * INSTRUCTION_BYTES);
+
+		add_bytecodes_to_ret(0, 4);		// padding the room to fill the starting_PC
+		add_bytecodes_to_ret(0, 4);		// padding the room to fill the size of static variable area
+
 	}
 
 
@@ -373,11 +521,14 @@ public:
 		string tmp;
 		while (getline(ss, tmp)) {
             ++number_of_lines;
+
+    // ************************************************* //
 		#if __FOR_DEBUG
             cout << number_of_lines << " : ";
 			if (tmp.length())
                 cout << tmp << endl;
 		#endif
+    // ************************************************* //
 
 			if (tmp.length() == 0) { continue; }
 
@@ -390,16 +541,23 @@ public:
 
             index_of_line = 0;
 			line_size = line.length();
-
 			if (line_size == 0) { continue; }
 
+
 			token _tk = next_token();
+			if (_tk == token(punctuation, ".")) {	// asm directive
+				/* TODO(); deal with the asm directive */
+				preprocess_asm_directive();
+				continue;
+			}
 
 			while (_tk.type != end_of_line && _tk.type != unknown) {
 
+		// ************************************************* //
 			#if __FOR_DEBUG
 				cout << "toekn(" << _tk.literal << ")" << endl;
 			#endif
+		// ************************************************* //
 
 				token_stream.push_back(_tk);
 				_tk = next_token();
@@ -411,6 +569,14 @@ public:
 	/* Syntax Analyzer */
 	void syntax_analyze() {
 
+		long long asm_directive_starting_pos = static_cast<long long>(current_position());
+		fill_asm_directive();
+		long long instruction_starting_pos = static_cast<long long>(current_position());
+		
+		set_bytecodes_to_ret(instruction_starting_pos, 4, 0);
+		set_bytecodes_to_ret(asm_directive_starting_pos, 4, 4);
+
+	// **************************************** //
 		index_of_stream = 0;	// init
 
 		size_t _Size = token_stream.size();
@@ -459,7 +625,9 @@ protected:
 	vector<bytecode_type> ret;
 	vector<token> token_stream;
 	map<string, size_t> label_map;
+	map<string, size_t> global_variable_map;
 	vector<pair<size_t, string> > label_fill_list;
+	vector<char> asm_directive_area;
 	stringstream ss;
 	string line;
 	size_t line_size;

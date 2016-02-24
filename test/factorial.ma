@@ -1,7 +1,7 @@
-# fac.ma
+# factorial.ma
 
 _main:
-	bipush  5
+	bipush  15
 	call  _func
 	iprint
 	exit

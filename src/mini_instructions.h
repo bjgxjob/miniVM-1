@@ -102,6 +102,7 @@ enum {
 /* 5 byte occupied */
 	LDC,
 	FCONST,
+	PUTS,
 };
 
 
@@ -160,6 +161,8 @@ static pair<const string, int> sz[] = {
 	pair<const string, int>("FSTORE", FSTORE),
 	pair<const string, int>("FLOAD", FLOAD),
 	pair<const string, int>("FCONST", FCONST),
+
+	pair<const string, int>("PUTS", PUTS),
 };
 
 static map<string, int> map_for_instr_and_bytecode(
@@ -230,6 +233,8 @@ string bytecode_to_instruction(int _opcode) {
 	case FLOAD : return "FLOAD";
 	case FCONST : return "FCONST";
 
+	case PUTS : return "PUTS";
+
 	default: return "Unknown";
 	}
 }
@@ -272,6 +277,18 @@ int occupied_bytes(int _n) {
 		return 5;
 	}
 }
+
+
+enum {
+	DIRECTIVE_LIMIT = 1,
+	DIRECTIVE_STACK,
+	DIRECTIVE_LOCALS,
+	DIRECTIVE_GLOBAL,
+	DIRECTIVE_FLOAT,
+	DIRECTIVE_INT,
+	// DIRECTIVE_ADDRESS,
+	DIRECTIVE_STRING,
+};
 
 
 } // namespace ministl
