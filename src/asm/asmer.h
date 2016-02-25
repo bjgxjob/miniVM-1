@@ -3,7 +3,7 @@
 #ifndef __MINI_ASMER_H
 #define __MINI_ASMER_H
 
-// miniASM only allows '\s' '#' '.' ':' ',' 'a-z' 'A-Z' '-' '0-9' '_' .
+// miniASM only allows '\s' '#' '.' ':' ',' 'a-z' 'A-Z' '-' '0-9' '_' '\"' .
 
 #include <iostream>
 #include <string>
@@ -197,6 +197,22 @@ public:
 		return line.substr(left, index_of_line - left);
 	}
 
+	char hex_to_char(char a, char b) {
+		char _c = 0;
+
+		if (a >= '0' && a <= '9') { _c |= (a - '0'); }
+		else if (a >= 'a' && a <= 'f') { _c |= (a - 'a' + 10); }
+		else { throw_error("hex number is not valid."); }
+
+		_c <<= 4;
+
+		if (b >= '0' && b <= '9') { _c |= (b - '0'); }
+		else if (b >= 'a' && b <= 'f') { _c |= (b - 'a' + 10); }
+		else { throw_error("hex number is not valid."); }
+
+		return _c;
+	}
+
 	string get_next_string() {	// for scanner
 		size_t left = ++index_of_line;
 		// i.e. s = " abc123, \t\"(%s)\"hey\n ";
@@ -220,11 +236,21 @@ public:
 				case '\"': _str += '\"'; break;
 				case '0': _str += '\0'; break;
 
-				case 'x': index_of_line += 2 ; break;	// hex TODO();
+				case 'x': 
+					_str += hex_to_char(line[index_of_line], line[index_of_line + 1]);
+					index_of_line += 2 ; break;
+				default:
+					_str += line[index_of_line - 2];
+					_str += line[index_of_line - 1];
+				#if 0
+					throw_error(string("The character \'") 
+						+ line[index_of_line]
+						+ "\' is not a valid escape character");
+				#endif
 				}
 			}
 		}
-		++index_of_line;
+		++index_of_line;	// discard the right '\"'
 		return _str;
 	}
 
@@ -265,31 +291,7 @@ public:
 	}
 
 	void opt_asm_directive() {
-		token _tk = get_next_token();
-
-		if (_tk.literal == "limit") {
-			if (see_next_token().type != varname) {
-				throw_error("It should be a string after assembly directive");
-			}
-
-			token _tmp = get_next_token();
-			if (_tmp.literal == "stack") {
-				token _tk_tmp = get_next_token();
-				long long _num = literal_to_number(_tk_tmp.literal);
-				// TODO();
-			} else if (_tmp.literal == "locals") {
-				token _tk_tmp = get_next_token();
-				long long _num = literal_to_number(_tk_tmp.literal);
-				// TODO();
-			} else {
-				throw_error("could not identify the operand \'"
-					+ _tmp.literal
-					+ "\'. (maybe you mean \'stack\' or \'locals\'?)");
-			}
-		} else {
-			throw_error("could not identify the assembly directive \'"
-				+ _tk.literal + "\'");
-		}
+		throw_error("it should not be the asm directive");
 	}
 
 	void opt_punctuation() {
@@ -343,6 +345,10 @@ public:
 			case ILOAD:
 			case FSTORE:
 			case FLOAD:
+		#if 0
+			case ASTORE:
+			case ALOAD:
+		#endif
 				add_bytecodes_to_ret(_num, 1); break;
 			case SIPUSH:
 			case ICONST:
@@ -372,6 +378,8 @@ public:
 						+ "\' should be a label");
 				} break;
 			case PUTS:
+			case IGLOBAL:
+			case FGLOBAL:
 				if (_tk_tmp.type == varname) {
 					if (!is_in_global_variable_map(_tk_tmp.literal)) {
 						throw_error("did not have the global variable \'"
@@ -420,11 +428,6 @@ public:
 				_tk = next_token();
 				if (_tk.type == number) {
 					long long _num = literal_to_number(_tk.literal);
-				#if 0
-					add_bytecodes_to_ret(DIRECTIVE_LIMIT, INSTRUCTION_BYTES);
-					add_bytecodes_to_ret(DIRECTIVE_STACK, INSTRUCTION_BYTES);
-					add_bytecodes_to_ret(_num, 4);
-				#endif
 					asm_directive_area.push_back(DIRECTIVE_LIMIT);
 					asm_directive_area.push_back(DIRECTIVE_STACK);
 					size_t _occupied_size = 4;
@@ -440,11 +443,6 @@ public:
 				_tk = next_token();
 				if (_tk.type == number) {
 					long long _num = literal_to_number(_tk.literal);
-				#if 0
-					add_bytecodes_to_ret(DIRECTIVE_LIMIT, INSTRUCTION_BYTES);
-					add_bytecodes_to_ret(DIRECTIVE_LOCALS, INSTRUCTION_BYTES);
-					add_bytecodes_to_ret(_num, 4);
-				#endif
 					asm_directive_area.push_back(DIRECTIVE_LIMIT);
 					asm_directive_area.push_back(DIRECTIVE_LOCALS);
 					size_t _occupied_size = 4;
@@ -482,6 +480,30 @@ public:
 				}
 			} else {
 				throw_error("expected a string name after the \'.string\'");
+			}
+		} else if (_tk == token(varname, "global")) {
+			_tk = next_token();
+			if (_tk.type == varname) {
+				if (is_in_global_variable_map(_tk.literal)) {
+					throw_error("redefined global variable \'"
+						+ _tk.literal + "\'");
+				} else {
+					add_to_global_variable_map(
+						// variable name and address
+						pair<string, size_t>(_tk.literal, current_position())
+					);
+					_tk = next_token();
+					if (_tk.type == number) {
+						int _num = static_cast<int>(literal_to_number(_tk.literal));
+						const char* _first = (const char*)&_num;
+						const char* _last = _first + sizeof(_num);
+						ret.insert(ret.end(), _first, _last);
+					} else {
+						throw_error("expected a number");
+					}
+				}
+			} else {
+				throw_error("expected a variable name after the \'.global\'");
 			}
 		} else {
 			throw_error("could not identify the assembly directive \'"

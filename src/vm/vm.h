@@ -299,7 +299,8 @@ protected:
 
 	void opt_FPRINT() {
 		sys_type _val = pop_operand();
-		printf("%f", *((float *)&_val));
+		// printf("%f", *((float *)&_val));
+		cout << *((float *)&_val);
 	}
 
 	void opt_CPRINT() {
@@ -496,11 +497,11 @@ protected:
 		show_vm_info();
 	}
 
-	void opt_DUP_1() {
+	void opt_DUP() {
 		duplicate_n_at_stack_top(1);
 	}
 
-	void opt_DUP_2() {
+	void opt_DUP2() {
 		duplicate_n_at_stack_top(2);
 	}
 
@@ -509,8 +510,27 @@ protected:
 		printf("%s", (const char*)&Instruction_List[_pos]);
 	}
 
+	void opt_IGLOBAL() {
+		sys_type _pos = static_cast<sys_type>(get_next_n_instruction(4));
+		push_operand(*((sys_type*)&Instruction_List[_pos]));
+	}
 
+	void opt_FGLOBAL() {
+		sys_type _pos = static_cast<sys_type>(get_next_n_instruction(4));
+		push_operand(*((sys_type*)&Instruction_List[_pos]));
+	}
+#if 0
+	void opt_ASTORE() {
+		size_t _n = static_cast<size_t>(get_next_instruction());
+		sys_type _val = pop_operand();
+		set_variable(_n, _val);
+	}
 
+	void opt_ALOAD() {
+		size_t _n = static_cast<size_t>(get_next_instruction());
+		push_operand(*((sys_type*)get_variable(_n)));
+	}
+#endif
 
 // ----------------------------------------------------------------------------
 	/* Instruction Cycle */
@@ -643,10 +663,10 @@ protected:
 			opt_JGE(); break;
 
 		// duplicate
-		case DUP_1:
-			opt_DUP_1(); break;
-		case DUP_2:
-			opt_DUP_2(); break;
+		case DUP:
+			opt_DUP(); break;
+		case DUP2:
+			opt_DUP2(); break;
 
 
 		// move
@@ -662,6 +682,13 @@ protected:
 			opt_FLOAD(); break;
 		case FCONST:
 			opt_FCONST(); break;
+	#if 0
+		case ASTORE:
+			opt_ASTORE(); break;
+		case ALOAD:
+			opt_ALOAD(); break;
+	#endif
+
 
 		// Will be discarded
 		case ISTORE_0:
@@ -693,9 +720,13 @@ protected:
 		case ILOAD_3:
 			opt_ILOAD_3(); break;
 
-		// string
+		// global
 		case PUTS:
 			opt_PUTS(); break;
+		case IGLOBAL:
+			opt_IGLOBAL(); break;
+		case FGLOBAL:
+			opt_FGLOBAL(); break;
 
 		default:
 			throw_error("unknown instruction : ", IR_Register);

@@ -30,6 +30,10 @@ namespace ministl {
 
 // instruction bytecode
 enum {
+	// pop
+	// pop2
+	// getaddr
+	// 
 
 /* 1 byte occupied */
 	NOP = 0,
@@ -71,8 +75,8 @@ enum {
 	ICONST_4,
 	ICONST_5,
 
-	DUP_1,
-	DUP_2,
+	DUP,
+	DUP2,
 
 /* 2 byte occupied */
 	BIPUSH,
@@ -81,7 +85,8 @@ enum {
 	ILOAD,
 	FSTORE,
 	FLOAD,
-	
+	ASTORE,
+	ALOAD,
 
 /* 3 byte occupied */
 	SIPUSH,
@@ -103,6 +108,9 @@ enum {
 	LDC,
 	FCONST,
 	PUTS,
+	IGLOBAL,
+	FGLOBAL,
+
 };
 
 
@@ -140,8 +148,8 @@ static pair<const string, int> sz[] = {
 	pair<const string, int>("ICONST_3", ICONST_3),
 	pair<const string, int>("ICONST_4", ICONST_4),
 	pair<const string, int>("ICONST_5", ICONST_5),
-	pair<const string, int>("DUP_1", DUP_1),
-	pair<const string, int>("DUP_2", DUP_2),
+	pair<const string, int>("DUP", DUP),
+	pair<const string, int>("DUP2", DUP2),
 	pair<const string, int>("JE", JE),
 	pair<const string, int>("JG", JG),
 	pair<const string, int>("JGE", JGE),
@@ -163,6 +171,11 @@ static pair<const string, int> sz[] = {
 	pair<const string, int>("FCONST", FCONST),
 
 	pair<const string, int>("PUTS", PUTS),
+	pair<const string, int>("IGLOBAL", IGLOBAL),
+	pair<const string, int>("FGLOBAL", FGLOBAL),
+
+	pair<const string, int>("ASTORE", ASTORE),
+	pair<const string, int>("ALOAD", ALOAD),
 };
 
 static map<string, int> map_for_instr_and_bytecode(
@@ -210,8 +223,8 @@ string bytecode_to_instruction(int _opcode) {
 	case ICONST_4 : return "ICONST_4";
 	case ICONST_5 : return "ICONST_5";
 
-	case DUP_1 : return "DUP_1";
-	case DUP_2 : return "DUP_2";
+	case DUP : return "DUP";
+	case DUP2 : return "DUP2";
 
 	case JE : return "JE";
 	case JG : return "JG";
@@ -234,6 +247,11 @@ string bytecode_to_instruction(int _opcode) {
 	case FCONST : return "FCONST";
 
 	case PUTS : return "PUTS";
+	case IGLOBAL : return "IGLOBAL";
+	case FGLOBAL : return "FGLOBAL";
+
+	case ASTORE : return "ASTORE";
+	case ALOAD : return "ALOAD";
 
 	default: return "Unknown";
 	}
@@ -285,7 +303,7 @@ enum {
 	DIRECTIVE_LOCALS,
 	DIRECTIVE_GLOBAL,
 	DIRECTIVE_FLOAT,
-	DIRECTIVE_INT,
+	DIRECTIVE_INTEGER,
 	// DIRECTIVE_ADDRESS,
 	DIRECTIVE_STRING,
 };
