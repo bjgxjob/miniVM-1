@@ -242,11 +242,6 @@ public:
 				default:
 					_str += line[index_of_line - 2];
 					_str += line[index_of_line - 1];
-				#if 0
-					throw_error(string("The character \'") 
-						+ line[index_of_line]
-						+ "\' is not a valid escape character");
-				#endif
 				}
 			}
 		}
@@ -345,10 +340,6 @@ public:
 			case ILOAD:
 			case FSTORE:
 			case FLOAD:
-		#if 0
-			case ASTORE:
-			case ALOAD:
-		#endif
 				add_bytecodes_to_ret(_num, 1); break;
 			case SIPUSH:
 			case ICONST:

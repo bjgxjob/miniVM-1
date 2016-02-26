@@ -519,18 +519,7 @@ protected:
 		sys_type _pos = static_cast<sys_type>(get_next_n_instruction(4));
 		push_operand(*((sys_type*)&Instruction_List[_pos]));
 	}
-#if 0
-	void opt_ASTORE() {
-		size_t _n = static_cast<size_t>(get_next_instruction());
-		sys_type _val = pop_operand();
-		set_variable(_n, _val);
-	}
 
-	void opt_ALOAD() {
-		size_t _n = static_cast<size_t>(get_next_instruction());
-		push_operand(*((sys_type*)get_variable(_n)));
-	}
-#endif
 
 // ----------------------------------------------------------------------------
 	/* Instruction Cycle */
@@ -682,12 +671,6 @@ protected:
 			opt_FLOAD(); break;
 		case FCONST:
 			opt_FCONST(); break;
-	#if 0
-		case ASTORE:
-			opt_ASTORE(); break;
-		case ALOAD:
-			opt_ALOAD(); break;
-	#endif
 
 
 		// Will be discarded

@@ -5,11 +5,9 @@
 
 
 _main:
-	bipush  30
+	bipush  35
 	call _fib1
 	iprint			# print the result
-	bipush 	10
-	cprint			# print '\n'
 	exit
 
 

@@ -85,8 +85,6 @@ enum {
 	ILOAD,
 	FSTORE,
 	FLOAD,
-	ASTORE,
-	ALOAD,
 
 /* 3 byte occupied */
 	SIPUSH,
@@ -174,8 +172,6 @@ static pair<const string, int> sz[] = {
 	pair<const string, int>("IGLOBAL", IGLOBAL),
 	pair<const string, int>("FGLOBAL", FGLOBAL),
 
-	pair<const string, int>("ASTORE", ASTORE),
-	pair<const string, int>("ALOAD", ALOAD),
 };
 
 static map<string, int> map_for_instr_and_bytecode(
@@ -249,9 +245,6 @@ string bytecode_to_instruction(int _opcode) {
 	case PUTS : return "PUTS";
 	case IGLOBAL : return "IGLOBAL";
 	case FGLOBAL : return "FGLOBAL";
-
-	case ASTORE : return "ASTORE";
-	case ALOAD : return "ALOAD";
 
 	default: return "Unknown";
 	}
